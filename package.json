@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "express": "^4.17.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13"
+  },
+  "name": "subo-server-beta",
+  "version": "0.0.1",
+  "description": "Subo Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "keywords": [
+    "subo",
+    "server"
+  ],
+  "author": "XevaDev",
+  "license": "ISC"
+}
