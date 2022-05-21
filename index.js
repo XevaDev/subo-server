@@ -2,41 +2,42 @@ const express = require("express");
 
 const bodyParser = require("body-parser");
 
-let users = require("./database/data/users.json").users;
+let usersFilePath = `${__dirname}/database/data/users.json`;
+let users = require(usersFilePath).users;
 
 const app = express();
 let clientUrl = "http://localhost:8080";
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
 const PORT = 2000;
 
 let getUserByToken = (token) => {
-  let k = users.map((u) => {
-    if (u.private.token === token) return u;
-  });
+  let k = users.find((u) => u.private.token === token);
 
-  return k[0];
+  return k ? k : undefined;
 };
 
 let getUserByEmail = (email) => {
-  let k = users.map((u) => {
-    if (u.private.email === email) return u;
-  });
+  let k = users.find((u) => u.private.email === email);
 
-  return k[0];
+  return k ? k : undefined;
 };
 
 let getUserByID = (id) => {
-  let k = users.map((u) => {
-    if (u.public.id === id) return u.public;
-  });
+  let k = users.map((u) => u.public.id === id);
 
-  return k[0];
+  return k ? k : undefined;
 };
 
-let saveJson = (filePath) => {
-  fs.writeFileSync(filePath, JSON.stringify(require(filePath)));
+let usernameMinLength = 3;
+let usernameMaxLength = 35;
+
+let usernameAlreadyExists = (username) => {
+  let k = users.find((u) => u.public.username === username);
+
+  return k ? true : false;
 };
 
 app.get("/pages/reg", (req, res) => {
@@ -70,19 +71,28 @@ app.get("/users/private/get/:token", (req, res) => {
   res.json(Object(p));
 });
 
-app.get(
-  "/users/private/editUsername/:token/:password/:username",
-  (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", clientUrl);
-    let token = req.params.token;
-    let password = req.params.password;
-    let newUsername = req.params.username;
+app.get("/users/private/editUsername/:token/:username", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", clientUrl);
+  let token = req.params.token;
+  let newUsername = req.params.username;
 
-    let x = getUserByToken(token);
-    if (x.private.password === password) {
-    }
+  let jres = {
+    statut: "error",
+  };
+
+  if (!usernameAlreadyExists(newUsername)) {
+    let u = users.find((l) => l.private.token === token);
+    u["public"]["username"] = newUsername;
+
+    fs.writeFileSync(usersFilePath, JSON.stringify(require(users)));
+
+    jres = {
+      statut: "success",
+    };
   }
-);
+
+  res.json(Object(jres));
+});
 
 app.get("/users/login/:email/:pw", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", clientUrl);
