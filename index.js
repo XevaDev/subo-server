@@ -82,18 +82,23 @@ app.get("/users/private/editUsername/:token/:username", (req, res) => {
 
   let alreadyEdited = false;
 
-  if (usernameAlreadyExists(newUsername)) return;
+  if (usernameAlreadyExists(newUsername)) {
+    res.status(200).json(jres);
+    return;
+  }
   if (
     newUsername.length < usernameMinLength ||
     newUsername.length > usernameMaxLength
-  )
+  ) {
+    res.status(200).json(jres);
     return;
+  }
 
   let u = getUserByToken(token);
   if (alreadyEdited) return;
   let index = users.users.indexOf(u);
 
-  users.users[parseInt(index)].public.username = newUsername;
+  users["users"][index]["public"]["username"] = newUsername;
 
   fs.writeFileSync(
     `${__dirname}/database/data/users.json`,
