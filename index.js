@@ -93,15 +93,7 @@ app.get("/users/private/editUsername/:token/:username", (req, res) => {
   if (alreadyEdited) return;
   let index = users.users.indexOf(u);
 
-  users.users[parseInt(index)] = {
-    private: u.private,
-    public: {
-      avatar: u.public.avatar,
-      bio: u.public.bio,
-      id: u.public.id,
-      username: newUsername,
-    },
-  };
+  users.users[parseInt(index)].public.username = newUsername;
 
   fs.writeFileSync(
     `${__dirname}/database/data/users.json`,
