@@ -1,9 +1,9 @@
 const express = require("express");
 
 const bodyParser = require("body-parser");
+const fs = require("fs");
 
-let usersFilePath = `${__dirname}/database/data/users.json`;
-let users = require(usersFilePath).users;
+let users = require(`./database/data/users.json`);
 
 const app = express();
 let clientUrl = "http://localhost:8080";
@@ -14,19 +14,19 @@ app.use(bodyParser.json());
 const PORT = 2000;
 
 let getUserByToken = (token) => {
-  let k = users.find((u) => u.private.token === token);
+  let k = users.users.find((u) => u.private.token === token);
 
   return k ? k : undefined;
 };
 
 let getUserByEmail = (email) => {
-  let k = users.find((u) => u.private.email === email);
+  let k = users.users.find((u) => u.private.email === email);
 
   return k ? k : undefined;
 };
 
 let getUserByID = (id) => {
-  let k = users.map((u) => u.public.id === id);
+  let k = users.users.map((u) => u.public.id === id);
 
   return k ? k : undefined;
 };
@@ -35,7 +35,7 @@ let usernameMinLength = 3;
 let usernameMaxLength = 35;
 
 let usernameAlreadyExists = (username) => {
-  let k = users.find((u) => u.public.username === username);
+  let k = users.users.find((u) => u.public.username === username);
 
   return k ? true : false;
 };
@@ -74,24 +74,47 @@ app.get("/users/private/get/:token", (req, res) => {
 app.get("/users/private/editUsername/:token/:username", (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", clientUrl);
   let token = req.params.token;
-  let newUsername = req.params.username;
+  let newUsername = req.params.username || "";
 
   let jres = {
     statut: "error",
   };
 
-  if (!usernameAlreadyExists(newUsername)) {
-    let u = users.find((l) => l.private.token === token);
-    u["public"]["username"] = newUsername;
+  let alreadyEdited = false;
 
-    fs.writeFileSync(usersFilePath, JSON.stringify(require(users)));
+  if (usernameAlreadyExists(newUsername)) return;
+  if (
+    newUsername.length < usernameMinLength ||
+    newUsername.length > usernameMaxLength
+  )
+    return;
 
-    jres = {
-      statut: "success",
-    };
-  }
+  let u = getUserByToken(token);
+  if (alreadyEdited) return;
+  let index = users.users.indexOf(u);
 
-  res.json(Object(jres));
+  users.users[parseInt(index)] = {
+    private: u.private,
+    public: {
+      avatar: u.public.avatar,
+      bio: u.public.bio,
+      id: u.public.id,
+      username: newUsername,
+    },
+  };
+
+  fs.writeFileSync(
+    `${__dirname}/database/data/users.json`,
+    JSON.stringify(users)
+  );
+
+  jres = {
+    statut: "success",
+  };
+
+  alreadyEdited = true;
+
+  res.status(200).json(jres);
 });
 
 app.get("/users/login/:email/:pw", (req, res) => {

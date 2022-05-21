@@ -1,17 +1,1 @@
-{
-  "users": [
-    {
-      "public": {
-        "id": "1",
-        "username": "Xevaltan",
-        "avatar": "https://cdn.discordapp.com/avatars/505832674217295875/a_fb5f06a263129c7419bbee970700fc69.webp",
-        "bio": ["Minecraft", "Worldbuilding", "Conlangs"]
-      },
-      "private": {
-        "email": "xevaltan@gmail.com",
-        "token": "xetoken",
-        "password": "lalala"
-      }
-    }
-  ]
-}
+{"users":[{"private":{"email":"xevaltan@gmail.com","token":"xetoken","password":"lalala"},"public":{"avatar":"https://cdn.discordapp.com/avatars/505832674217295875/a_fb5f06a263129c7419bbee970700fc69.webp","bio":["Minecraft","Worldbuilding","Conlangs"],"id":"1","username":"Xevaltan"}}]}
