@@ -1,81 +1,60 @@
-// Import libs.
-
 import express = require("express");
+const app = express();
+
 import bodyParser = require("body-parser");
 import fs = require("fs");
 
-// Database of users.
-import users = require("./database/data/users.json");
+import usernameAlreadyExists = require("./libs/usernameAlreadyExists");
+import editUsername = require("./libs/editUsername");
+import getCategory = require("./libs/getCategory");
+import listCategory = require("./libs/listCategories");
+import getUserByToken = require("./libs/getUser/getUserByToken");
+import getUserByEmail = require("./libs/getUser/getUserByEmail");
+import getUserByID = require("./libs/getUser/getUserByID");
 
-const app = express();
 let clientUrl = "http://localhost:8080";
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const PORT = 2000;
-
-// Some functions to simplify a bit.
-let getUserByToken = (token: string) => {
-  let k = users.users.find((u) => u.private.token === token);
-
-  return k ? k : undefined;
-};
-
-let getUserByEmail = (email: string) => {
-  let k = users.users.find((u) => u.private.email === email);
-
-  return k ? k : undefined;
-};
-
-let getUserByID = (id: string) => {
-  let k = users.users.find((u) => u.public.id === id);
-  return k ? k : undefined;
-};
+const PORT = process.env.PORT || 2000;
 
 // Username length limitations
 
 let usernameMinLength = 3;
 let usernameMaxLength = 35;
 
-// -
-let usernameAlreadyExists = (username: string) => {
-  let k = users.users.find((u) => u.public.username === username);
-
-  return k ? true : false;
-};
-
 // Check if the the client's token is a valid token account.
 
-app.get("/users/private/exists/:token", (req, res) => {
+app.get("/users/private/exists/:token", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", clientUrl);
   let tokenSeek = req.params.token;
   console.log(`Seeked for ${tokenSeek}`);
 
   // Get user with the token
-  let u = getUserByToken(tokenSeek);
+  let u = await getUserByToken(tokenSeek);
 
   // Verify if a account has that token.
   if (typeof u === "undefined") {
     res.json({ token: tokenSeek, exists: false });
   } else {
     // Sent to the client that the token is valid.
-    res.json({ token: u.private.token, exists: true });
+    res.json({ token: u.token, exists: true });
   }
 });
 
-app.get("/users/private/get/:token", (req, res) => {
+app.get("/users/private/get/:token", async (req, res) => {
   /* Get private infos thanks to the token. Don't share your token ! (even if tokens change every days
   for security.) */
 
   res.setHeader("Access-Control-Allow-Origin", clientUrl);
   let token = req.params.token;
-  let p = getUserByToken(token);
+  let p = await getUserByToken(token);
   res.json(p);
 });
 
 // System to change username. Verifications are server-side only.
-app.get("/users/private/editUsername/:token/:username", (req, res) => {
+app.get("/users/private/editUsername/:token/:username", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", clientUrl);
   let token = req.params.token;
   let newUsername = req.params.username || "";
@@ -101,21 +80,12 @@ app.get("/users/private/editUsername/:token/:username", (req, res) => {
     return;
   }
 
-  let u = getUserByToken(token);
   if (alreadyEdited) return;
-  let index = users.users.indexOf(u);
 
-  // Changing the username directly in the database with json manipulations
-  users["users"][index]["public"]["username"] = newUsername;
+  let u = await getUserByToken(token);
 
-  fs.writeFileSync(
-    `${__dirname}/database/data/users.json`,
-    JSON.stringify(users)
-  );
+  editUsername(u.token, newUsername);
 
-  // - Json manipulations ends
-
-  // It was made with success
   jres = {
     statut: "success",
   };
@@ -130,7 +100,7 @@ app.get("/users/private/editUsername/:token/:username", (req, res) => {
    But, some features need password. So, if the person have the token but not the password,
    he won't access to certains features
 */
-app.get("/users/login/:email/:pw", (req, res) => {
+app.get("/users/login/:email/:pw", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", clientUrl);
   let email = req.params.email;
   let pw = req.params.pw;
@@ -141,13 +111,13 @@ app.get("/users/login/:email/:pw", (req, res) => {
     token: null,
   };
 
-  let u = getUserByEmail(email);
+  let u = await getUserByEmail(email);
 
   // Verify if the password match the the account that has that email.
   if (!(typeof u === "undefined")) {
-    if (u.private.password === pw) {
+    if (u.password === pw) {
       resj.bad = false;
-      resj.token = u.private.token;
+      resj.token = u.token;
     }
   }
 
@@ -157,13 +127,28 @@ app.get("/users/login/:email/:pw", (req, res) => {
 /* It is essential for Subo. It is public informations, to get contents of the user, get avatar, etc.
    /!\ We can't connect to the others accounts of that user because private informations are hidden.
 */
-app.get("/users/public/get/:id", (req, res) => {
+app.get("/users/public/get/:id", async (req, res) => {
   let id = req.params.id;
-
-  let u = getUserByID(id);
+  let u = await getUserByID(id);
 
   if (!u) return res.status(200).json({ error: "error" });
-  res.status(200).json(u.public);
+  res.status(200).json(u);
+});
+
+// Custom css to custom pages
+
+app.get("/category/css/:id", (req, res) => {
+  let id = req.params.id;
+  res.status(200).send(getCategory(id).css);
+});
+
+app.get("/category/data/:id", (req, res) => {
+  let id = req.params.id;
+  res.status(200).json(getCategory(id));
+});
+
+app.get("/category/list", (req, res) => {
+  res.status(200).json({ categories: listCategory() });
 });
 
 // Open the server
