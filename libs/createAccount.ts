@@ -2,17 +2,7 @@ import mysql = require("mysql");
 import passwordhash = require("password-hash");
 import tokenGenerator = require("./tokenGenerator");
 
-type user = {
-  username: string;
-  email: string;
-  password: string;
-  token?: string;
-  avatar: string;
-  id?: number;
-  bio: string;
-  createdAt?: Date;
-  verified?: boolean;
-};
+import type { user } from "./types";
 
 function createAccount(user: user) {
   var connection = mysql.createConnection({

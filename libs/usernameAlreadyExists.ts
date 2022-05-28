@@ -1,30 +1,29 @@
 import mysql = require("mysql");
 
-function usernameAlreadyExists(username: string): boolean {
-  let resx: boolean;
+async function usernameAlreadyExists(username: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    var connection = mysql.createConnection({
+      host: "localhost",
+      port: 3306,
+      user: "root",
+      database: "subodb",
+    });
 
-  var connection = mysql.createConnection({
-    host: "localhost",
-    port: 3306,
-    user: "root",
-    database: "subodb",
-  });
+    connection.connect((err) => {
+      if (err) reject(err);
+      let sql = `SELECT username FROM users WHERE username = '${username}'`;
 
-  connection.connect((err) => {
-    if (err) throw err;
-    let sql = `SELECT username FROM users WHERE username = '${username}'`;
-
-    connection.query(sql, (err, res) => {
-      if (err) throw err;
-      if (res[0] && res[0].username === username) {
-        resx = true;
-      } else {
-        resx = false;
-      }
+      connection.query(sql, (err, res) => {
+        if (err) reject(err);
+        if (res[0] && res[0].username === username) {
+          console.log(res[0]);
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
     });
   });
-
-  return resx;
 }
 
 export = usernameAlreadyExists;

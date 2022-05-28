@@ -3,10 +3,10 @@ declare type category = {
     name: string;
     memberCount: number;
     ownerId: number;
-    createdAt: string;
+    created_at: string;
     css?: string;
     description: string;
     icon: string;
 };
-declare function listCategory(): category[];
+declare function listCategory(): Promise<category[]>;
 export = listCategory;

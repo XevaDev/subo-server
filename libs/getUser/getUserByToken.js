@@ -16,7 +16,10 @@ async function getUserByToken(val) {
                 if (err)
                     reject(err);
                 let r = res[0];
-                resolve(r);
+                if (r)
+                    resolve(r);
+                else
+                    reject("No user found");
             });
         });
     });

@@ -28,8 +28,8 @@ async function getUserByToken(val: string): Promise<user> {
       connection.query(sql, (err, res) => {
         if (err) reject(err);
         let r = res[0];
-
-        resolve(r);
+        if (r) resolve(r);
+        else reject("No user found");
       });
     });
   });

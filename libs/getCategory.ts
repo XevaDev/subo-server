@@ -4,45 +4,38 @@ type category = {
   name: string;
   memberCount: number;
   ownerId: number;
-  createdAt: string;
+  created_at: string;
   css?: string;
   description: string;
   icon: string;
 };
 
-function getCategory(id: string) {
-  let resx: category;
+async function getCategory(id: string): Promise<category> {
+  return new Promise((resolve, reject) => {
+    var connection = mysql.createConnection({
+      host: "localhost",
+      port: 3306,
+      user: "root",
+      database: "subodb",
+    });
 
-  var connection = mysql.createConnection({
-    host: "localhost",
-    port: 3306,
-    user: "root",
-    database: "subodb",
-  });
+    let sql = `SELECT * FROM category WHERE id = '${id}'`;
 
-  let sql = `SELECT * FROM category WHERE id = '${id}'`;
+    connection.connect((err) => {
+      if (err) reject(err);
+      connection.query(sql, (err, res) => {
+        if (err) reject(err);
 
-  connection.connect((err) => {
-    if (err) throw err;
-    connection.query(sql, (err, res) => {
-      if (err) throw err;
+        let r = res[0];
 
-      if (res[0]) {
-        resx = {
-          id: res[0].id,
-          createdAt: res[0].created_at,
-          css: res[0].css,
-          name: res[0].name,
-          description: res[0].description,
-          icon: res[0].icon,
-          memberCount: res[0].memberCount,
-          ownerId: res[0].ownerId,
-        };
-      }
+        if (r) {
+          resolve(res);
+        } else {
+          reject();
+        }
+      });
     });
   });
-
-  return resx;
 }
 
 export = getCategory;
